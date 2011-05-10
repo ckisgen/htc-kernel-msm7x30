@@ -82,24 +82,25 @@ static struct clock_state drv_state = { 0 };
 static struct cpufreq_frequency_table freq_table[] = {
 	{ 0, 245760 },
 	{ 1, 368640 },
-	{ 2, 768000 },
+	{ 2, 576000 },
 #if defined(CONFIG_MACH_SPADE) || defined(CONFIG_MACH_GLACIER)
-	{ 3, 1017600 },
-	{ 4, 1113600 },
-	{ 5, 1209600 },
-	{ 6, 1305600 },
-	{ 7, 1401600 },
-	{ 8, 1497600 },
-	{ 9, 1516800 },
+	{ 3, 768000 },	
+	{ 4, 1017600 },
+	{ 5, 1113600 },
+	{ 6, 1209600 },
+	{ 7, 1305600 },
+	{ 8, 1401600 },
+	{ 9, 1497600 },
+	{ 10, 1516800 },
 #ifndef CONFIG_JESUS_PHONE
-	{ 10, CPUFREQ_TABLE_END },
+	{ 11, CPUFREQ_TABLE_END },
 #else
 	/* Just an example of some of the insanity I was able to pull off on my
 	   device */
-	{ 10, 1612800 },
-	{ 11, 1708800 },
-	{ 12, 1804800 },
-	{ 13, CPUFREQ_TABLE_END },
+	{ 11, 1612800 },
+	{ 12, 1708800 },
+	{ 13, 1804800 },
+	{ 14, CPUFREQ_TABLE_END },
 #endif
 #else
 	{ 3, 806400 },
@@ -134,7 +135,8 @@ static struct clkctl_acpu_speed acpu_freq_tbl[] = {
 	{ MAX_AXI_KHZ, SRC_AXI, 1, 0, 61440, 900, VDD_RAW(900) },
 	{ 245760, PLL_3,    5, 2,  61440,  900, VDD_RAW(900) },
 	{ 368640, PLL_3,    5, 1,  122800, 900, VDD_RAW(900) },
-	{ 768000, PLL_1,    2, 0,  153600, 1050, VDD_RAW(1050) },
+	{ 576000, PLL_3,    5, 1,  192000, 975, VDD_RAW(975) },
+	{ 768000, PLL_1,    2, 0,  153600, 1025, VDD_RAW(1025) },
 	/* Make sure any freq based from PLL_2 is a multiple of 19200! 
 	   Voltage tables are being very conservative and are not designed to
 	   be an undervolt of any sort. */
@@ -144,7 +146,7 @@ static struct clkctl_acpu_speed acpu_freq_tbl[] = {
 	{ 806400, PLL_2,    3, 0,  192000, 1100, VDD_RAW(1100) },
 	{ 1017600, PLL_2,   3, 0,  192000, 1200, VDD_RAW(1200) },
 #endif
-	{ 1113600, PLL_2,   3, 0,  192000, 1200, VDD_RAW(1200) },
+	{ 1113600, PLL_2,   3, 0,  192000, 1175, VDD_RAW(1175) },
 	{ 1209600, PLL_2,   3, 0,  192000, 1200, VDD_RAW(1200) },
 	{ 1305600, PLL_2,   3, 0,  192000, 1200, VDD_RAW(1200) },
 	{ 1401600, PLL_2,   3, 0,  192000, 1300, VDD_RAW(1300) },
