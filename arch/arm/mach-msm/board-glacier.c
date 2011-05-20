@@ -68,7 +68,6 @@
 #include <mach/vreg.h>
 #include <mach/atmega_microp.h>
 #include <mach/htc_battery.h>
-#include <linux/tps65200.h>
 #include <mach/htc_fmtx_rfkill.h>
 #include <mach/htc_headset_mgr.h>
 #include <mach/htc_headset_gpio.h>
@@ -119,7 +118,7 @@ void config_glacier_usb_id_gpios(bool output)
 static int phy_init_seq[] = { 0x06, 0x36, 0x0C, 0x31, 0x31, 0x32, 0x1, 0x0D, 0x1, 0x10, -1 };
 static struct msm_hsusb_platform_data msm_hsusb_pdata = {
 	.phy_init_seq		= phy_init_seq,
-	.phy_reset		= (void *) msm_hsusb_phy_reset,
+	.phy_reset		= msm_hsusb_phy_reset,
 	.usb_id_pin_gpio  = GLACIER_GPIO_USB_ID_PIN,
 	.dock_detect = 1, /* detect desk dock */
 	.dock_pin_gpio  = GLACIER_GPIO_DOCK_PIN,
@@ -143,14 +142,14 @@ static struct platform_device usb_mass_storage_device = {
 #ifdef CONFIG_USB_ANDROID_RNDIS
 static struct usb_ether_platform_data rndis_pdata = {
 	/* ethaddr is filled by board_serialno_setup */
-	.vendorID       = 0x18d1,
-	.vendorDescr    = "Google, Inc.",
+	.vendorID	= 0x18d1,
+	.vendorDescr	= "Google, Inc.",
 };
 
 static struct platform_device rndis_device = {
-	.name   = "rndis",
-	.id     = -1,
-	.dev    = {
+	.name	= "rndis",
+	.id	= -1,
+	.dev	= {
 		.platform_data = &rndis_pdata,
 	},
 };
@@ -186,7 +185,7 @@ void glacier_add_usb_devices(void)
 	config_glacier_usb_id_gpios(0);
 	platform_device_register(&msm_device_hsusb);
 #ifdef CONFIG_USB_ANDROID_RNDIS
-       platform_device_register(&rndis_device);
+	platform_device_register(&rndis_device);
 #endif
 	platform_device_register(&usb_mass_storage_device);
 	platform_device_register(&android_usb_device);
@@ -290,7 +289,7 @@ static struct htc_headset_mgr_platform_data htc_headset_mgr_data = {
 
 static struct htc_battery_platform_data htc_battery_pdev_data = {
 	.guage_driver = GUAGE_MODEM,
-	.charger = SWITCH_CHARGER_TPS65200,
+	.charger = SWITCH_CHARGER,
 	.m2a_cable_detect = 1,
 	.int_data.chg_int = MSM_GPIO_TO_INT(PM8058_GPIO_PM_TO_SYS(GLACIER_GPIO_CHG_INT)),
 };
@@ -326,7 +325,7 @@ static struct microp_function_config microp_functions[] = {
 static struct microp_function_config microp_lightsensor_function = {
 	.name = "light_sensor",
 	.category = MICROP_FUNCTION_LSENSOR,
-	.levels = { 1, 3, 5, 17, 33, 172, 299, 326, 344, 1023 },
+        .levels = { 1, 3, 5, 17, 33, 172, 299, 326, 344, 1023 },
 	.channel = 3,
 	.int_pin = 1 << 9,
 	.golden_adc = 0xD3,
@@ -509,16 +508,11 @@ static struct platform_device capella_cm3602 = {
 
 static int glacier_ts_atmel_power(int on)
 {
-	pr_info("%s: power %d\n", __func__, on);
-
-	if (on == 1)
-		gpio_set_value(PM8058_GPIO_PM_TO_SYS(GLACIER_TP_RSTz), 1);
-	else if (on == 2) {
-		gpio_set_value(PM8058_GPIO_PM_TO_SYS(GLACIER_TP_RSTz), 0);
-		msleep(5);
-		gpio_set_value(PM8058_GPIO_PM_TO_SYS(GLACIER_TP_RSTz), 1);
-		msleep(40);
-	}
+	printk(KERN_INFO "%s():\n", __func__);
+	gpio_set_value(PM8058_GPIO_PM_TO_SYS(GLACIER_TP_RSTz), 0);
+	msleep(5);
+	gpio_set_value(PM8058_GPIO_PM_TO_SYS(GLACIER_TP_RSTz), 1);
+	msleep(40);
 
 	return 0;
 }
@@ -550,7 +544,10 @@ struct atmel_i2c_platform_data glacier_ts_atmel_data[] = {
 		.config_T27 = {0, 0, 0, 0, 0, 0, 0},
 		.config_T28 = {0, 0, 2, 4, 16, 60},
 		.object_crc = {0x04, 0xE0, 0xBA},
+		.cal_tchthr = {50, 55},
 		.cable_config = {40, 35, 8, 16},
+		.wlc_config = {20, 20, 50, 50, 40, 18, 18},
+		.wlc_freq = {0, 38, 48, 255, 255},
 		.GCAF_level = {20, 24, 28, 40, 63},
 		.filter_level = {10, 60, 963, 1013},
 	},
@@ -581,6 +578,7 @@ struct atmel_i2c_platform_data glacier_ts_atmel_data[] = {
 		.config_T28 = {0, 0, 2, 4, 16, 60},
 		.object_crc = {0x48, 0x5E, 0x95},
 		.cable_config = {40, 35, 8, 16},
+		.wlc_config = {30, 30, 35, 45, 40, 8, 16},
 		.GCAF_level = {20, 24, 28, 40, 63},
 		.filter_level = {10, 60, 963, 1013},
 	},
@@ -592,10 +590,6 @@ static struct i2c_board_info i2c_a1026_devices[] = {
 			.platform_data = &a1026_data,
 			/*.irq = MSM_GPIO_TO_INT(PASSIONC_AUD_A1026_INT)*/
 	},
-};
-
-static struct tps65200_platform_data tps65200_data = {
-	.charger_check = 0,
 };
 
 static struct i2c_board_info i2c_devices[] = {
@@ -616,7 +610,6 @@ static struct i2c_board_info i2c_devices[] = {
 	},
 	{
 		I2C_BOARD_INFO("tps65200", 0xD4 >> 1),
-		.platform_data = &tps65200_data,
 	},
 };
 
@@ -946,7 +939,7 @@ static void __init msm7x30_init_marimba(void)
 		return;
 	}
 }
-#ifdef CONFIG_MSM7KV2_1X_AUDIO
+#ifdef CONFIG_MSM7KV2_AUDIO
 static struct resource msm_aictl_resources[] = {
 	{
 		.name = "aictl",
@@ -1242,7 +1235,7 @@ static void __init audience_gpio_reset(void)
 	pr_info("Configure audio codec gpio for devices without audience.\n");
 }
 
-#endif /* CONFIG_MSM7KV2_1X_AUDIO */
+#endif /* CONFIG_MSM7KV2_AUDIO */
 
 static struct i2c_board_info msm_marimba_board_info[] = {
 	{
@@ -1347,8 +1340,6 @@ static int msm_qsd_spi_dma_config(void)
 #endif
 static struct msm_spi_platform_data qsd_spi_pdata = {
 	.max_clock_speed = 26000000,
-	.clk_name = "spi_clk",
-	.pclk_name = "spi_pclk",
 	.gpio_config  = msm_qsd_spi_gpio_config,
 	.gpio_release = msm_qsd_spi_gpio_release,
 //	.dma_config = msm_qsd_spi_dma_config,
@@ -1766,7 +1757,6 @@ static struct msm_camera_sensor_info msm_camera_sensor_s5k4e1gx_data = {
 	.num_resources  = ARRAY_SIZE(msm_camera_resources),
 	.flash_cfg	= &msm_camera_sensor_flash_cfg,
 	.sensor_lc_disable = true, /* disable sensor lens correction */
-	.cam_select_pin = GLACIER_CLK_SWITCH,
 };
 
 static struct platform_device msm_camera_sensor_s5k4e1gx = {
@@ -1810,7 +1800,7 @@ static struct msm_camera_sensor_info msm_camera_sensor_mt9v113_data = {
 	.flash_type     = MSM_CAMERA_FLASH_NONE,
 	.resource = msm_camera_resources,
 	.num_resources = ARRAY_SIZE(msm_camera_resources),
-	.cam_select_pin = GLACIER_CLK_SWITCH,
+
 };
 
 static struct platform_device msm_camera_sensor_mt9v113 = {
@@ -1865,21 +1855,12 @@ static void config_glacier_flashlight_gpios(void)
 	config_gpio_table(fl_gpio_table, ARRAY_SIZE(fl_gpio_table));
 }
 
-static void config_glacier_emmc_gpios(void)
-{
-	uint32_t emmc_gpio_table[] = {
-		PCOM_GPIO_CFG(GLACIER_GPIO_EMMC_RST, 0, GPIO_OUTPUT,
-						GPIO_NO_PULL, GPIO_8MA),
-	};
-	config_gpio_table(emmc_gpio_table,
-		ARRAY_SIZE(emmc_gpio_table));
-}
-
 static struct flashlight_platform_data glacier_flashlight_data = {
 	.gpio_init		= config_glacier_flashlight_gpios,
 	.torch			= GLACIER_GPIO_FLASHLIGHT_TORCH,
 	.flash			= GLACIER_GPIO_FLASHLIGHT_FLASH,
 	.flash_duration_ms	= 600,
+	.led_count		= 1,
 };
 
 static struct platform_device glacier_flashlight_device = {
@@ -1891,24 +1872,24 @@ static struct platform_device glacier_flashlight_device = {
 
 #if defined(CONFIG_SERIAL_MSM_HS) && defined(CONFIG_SERIAL_MSM_HS_PURE_ANDROID)
 static struct msm_serial_hs_platform_data msm_uart_dm1_pdata = {
-        .rx_wakeup_irq = -1,
-        .inject_rx_on_wakeup = 0,
-        .exit_lpm_cb = bcm_bt_lpm_exit_lpm_locked,
+    .rx_wakeup_irq = -1,
+    .inject_rx_on_wakeup = 0,
+    .exit_lpm_cb = bcm_bt_lpm_exit_lpm_locked,
 };
 
 static struct bcm_bt_lpm_platform_data bcm_bt_lpm_pdata = {
-        .gpio_wake = GLACIER_GPIO_BT_CHIP_WAKE,
-        .gpio_host_wake = GLACIER_GPIO_BT_HOST_WAKE,
-        .request_clock_off_locked = msm_hs_request_clock_off_locked,
-        .request_clock_on_locked = msm_hs_request_clock_on_locked,
+    .gpio_wake = GLACIER_GPIO_BT_CHIP_WAKE,
+    .gpio_host_wake = GLACIER_GPIO_BT_HOST_WAKE,
+    .request_clock_off_locked = msm_hs_request_clock_off_locked,
+    .request_clock_on_locked = msm_hs_request_clock_on_locked,
 };
 
-struct platform_device glacier_bcm_bt_lpm_device = {
-        .name = "bcm_bt_lpm",
-        .id = 0,
-        .dev = {
-                .platform_data = &bcm_bt_lpm_pdata,
-        },
+struct platform_device bcm_bt_lpm_device = {
+    .name = "bcm_bt_lpm",
+    .id = 0,
+    .dev = {
+        .platform_data = &bcm_bt_lpm_pdata,
+    },
 };
 
 #define ATAG_BDADDR 0x43294329  /* mahimahi bluetooth address tag */
@@ -1922,13 +1903,13 @@ MODULE_PARM_DESC(bdaddr, "bluetooth address");
 
 static int __init parse_tag_bdaddr(const struct tag *tag)
 {
-        unsigned char *b = (unsigned char *)&tag->u;
+    unsigned char *b = (unsigned char *)&tag->u;
 
-        if (tag->hdr.size != ATAG_BDADDR_SIZE)
-                return -EINVAL;
+    if (tag->hdr.size != ATAG_BDADDR_SIZE)
+        return -EINVAL;
 
-        snprintf(bdaddr, BDADDR_STR_SIZE, "%02X:%02X:%02X:%02X:%02X:%02X",
-                        b[0], b[1], b[2], b[3], b[4], b[5]);
+    snprintf(bdaddr, BDADDR_STR_SIZE, "%02X:%02X:%02X:%02X:%02X:%02X",
+            b[0], b[1], b[2], b[3], b[4], b[5]);
 
         return 0;
 }
@@ -1977,7 +1958,7 @@ MODULE_PARM_DESC(bt_fw_version, "BT's fw version");
 static struct platform_device *devices[] __initdata = {
 	&msm_device_uart2,
 #ifdef CONFIG_SERIAL_MSM_HS_PURE_ANDROID
-	&glacier_bcm_bt_lpm_device,
+    &bcm_bt_lpm_device,
 #endif
 	&msm_device_smd,
 	&glacier_rfkill,
@@ -1994,7 +1975,7 @@ static struct platform_device *devices[] __initdata = {
 #ifdef CONFIG_INPUT_CAPELLA_CM3602
 	&capella_cm3602,
 #endif
-#ifdef CONFIG_MSM7KV2_1X_AUDIO
+#ifdef CONFIG_MSM7KV2_AUDIO
 	&msm_aictl_device,
 	&msm_mi2s_device,
 	&msm_lpa_device,
@@ -2005,7 +1986,7 @@ static struct platform_device *devices[] __initdata = {
 #ifdef CONFIG_MSM_GEMINI
 	&msm_gemini_device,
 #endif
-#ifdef CONFIG_MSM7KV2_1X_AUDIO
+#ifdef CONFIG_MSM7KV2_AUDIO
 	&msm_aux_pcm_device,
 #endif
 	&msm_camera_sensor_s5k4e1gx,
@@ -2207,6 +2188,35 @@ static struct msm_spm_platform_data msm_spm_data __initdata = {
 	.vctl_timeout_us = 50,
 };
 
+static ssize_t glacier_virtual_keys_show(struct kobject *kobj,
+			struct kobj_attribute *attr, char *buf)
+{
+		/* center: x: home: 45, menu: 152, back: 318, search 422, y: 830 */
+	return sprintf(buf,
+		__stringify(EV_KEY) ":" __stringify(KEY_HOME)	    ":47:830:74:50"
+		":" __stringify(EV_KEY) ":" __stringify(KEY_MENU)   ":155:830:80:50"
+		":" __stringify(EV_KEY) ":" __stringify(KEY_BACK)   ":337:830:90:50"
+		":" __stringify(EV_KEY) ":" __stringify(KEY_SEARCH) ":434:830:60:50"
+		"\n");
+}
+
+static struct kobj_attribute glacier_virtual_keys_attr = {
+	.attr = {
+		.name = "virtualkeys.atmel-touchscreen",
+		.mode = S_IRUGO,
+	},
+	.show = &glacier_virtual_keys_show,
+};
+
+static struct attribute *glacier_properties_attrs[] = {
+	&glacier_virtual_keys_attr.attr,
+	NULL
+};
+
+static struct attribute_group glacier_properties_attr_group = {
+	.attrs = glacier_properties_attrs,
+};
+
 static void glacier_reset(void)
 {
 	gpio_set_value(GLACIER_GPIO_PS_HOLD, 0);
@@ -2215,11 +2225,9 @@ static void glacier_reset(void)
 static void __init glacier_init(void)
 {
 	int ret = 0;
+	struct kobject *properties_kobj;
 	printk("glacier_init() reglacier=%d\n", system_rev);
 	printk(KERN_INFO "%s: microp version = %s\n", __func__, microp_ver);
-
-	/* Must set msm_hw_reset_hook before first proc comm */
-	msm_hw_reset_hook = glacier_reset;
 
 	if (socinfo_init() < 0)
 		printk(KERN_ERR "%s: socinfo_init() failed!\n", __func__);
@@ -2237,6 +2245,8 @@ static void __init glacier_init(void)
 		&msm_device_uart2.dev, 23, MSM_GPIO_TO_INT(GLACIER_GPIO_UART2_RX));
 #endif
 
+	msm_hw_reset_hook = glacier_reset;
+
 #ifdef CONFIG_SERIAL_MSM_HS
 	msm_device_uart_dm1.dev.platform_data = &msm_uart_dm1_pdata;
 	#ifndef CONFIG_SERIAL_MSM_HS_PURE_ANDROID
@@ -2251,7 +2261,7 @@ static void __init glacier_init(void)
 	msm_device_i2c_init();
 	qup_device_i2c_init();
 	msm7x30_init_marimba();
-#ifdef CONFIG_MSM7KV2_1X_AUDIO
+#ifdef CONFIG_MSM7KV2_AUDIO
 	msm_snddev_init();
 	aux_pcm_gpio_init();
 #endif
@@ -2261,7 +2271,7 @@ static void __init glacier_init(void)
 	msm_acpu_clock_init(&glacier_clock_data);
 	perflock_init(&glacier_perflock_data);
 
-	msm_init_pmic_vibrator(3000);
+	/*msm_init_pmic_vibrator();*/
 #ifdef CONFIG_MICROP_COMMON
 	glacier_microp_init();
 #endif
@@ -2285,7 +2295,6 @@ static void __init glacier_init(void)
 	glacier_ssbi_pmic_init();
 #endif
 
-	config_glacier_emmc_gpios();	/* for emmc gpio reset test */
 	ret = glacier_init_mmc(system_rev);
 	if (ret != 0)
 		pr_crit("%s: Unable to initialize MMC\n", __func__);
@@ -2314,6 +2323,10 @@ static void __init glacier_init(void)
 	else
 		i2c_register_board_info(0, i2c_a1026_devices, ARRAY_SIZE(i2c_a1026_devices));
 
+	properties_kobj = kobject_create_and_add("board_properties", NULL);
+	if (properties_kobj)
+		ret = sysfs_create_group(properties_kobj,
+				&glacier_properties_attr_group);
 	glacier_audio_init();
 	glacier_init_keypad();
 	glacier_wifi_init();
