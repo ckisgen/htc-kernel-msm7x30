@@ -7,8 +7,8 @@
  * files take a comma separated list of numbers in ascending order.
  *
  * For example, write "0,8" to /sys/module/lowmemorykiller/parameters/adj and
- * "1024,4096" to /sys/module/lowmemorykiller/parameters/minfree to kill processes
- * with a oom_adj value of 8 or higher when the free memory drops below 4096 pages
+ * "1024,4096" to /sys/module/lowmemorykiller/parameters/minfree to kill procs
+ * with a oom_adj value of 8 or higher when the free memory drops below 4096 pgs
  * and kill processes with a oom_adj value of 0 or higher when the free memory
  * drops below 1024 pages.
  *
@@ -66,12 +66,12 @@ static int lowmem_minfile_size = 6;
 
 static struct task_struct *lowmem_deathpending;
 static unsigned long lowmem_deathpending_timeout;
-static uint32_t lowmem_check_filepages = 0;
+static uint32_t lowmem_check_filepages;
 
 #define lowmem_print(level, x...)			\
 	do {						\
 		if (lowmem_debug_level >= (level)) {	\
-			printk("lowmem: ");		\
+			printk(KERN_ERR "lowmem: ");	\
 			printk(x);			\
 		}					\
 	} while (0)

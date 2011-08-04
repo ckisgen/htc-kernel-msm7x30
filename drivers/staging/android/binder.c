@@ -2890,7 +2890,7 @@ static int exist_proc_entry(const char *name, struct proc_dir_entry *parent)
 	int len;
 
 	len = strlen(name);
-	for (p = &parent->subdir; *p; p=&(*p)->next ) {
+	for (p = &parent->subdir; *p; p = &(*p)->next) {
 		if (proc_match(len, name, *p)) {
 			de = *p;
 			*p = de->next;
@@ -2935,9 +2935,8 @@ static int binder_open(struct inode *nodp, struct file *filp)
 	if (binder_proc_dir_entry_proc) {
 		char strbuf[11];
 		snprintf(strbuf, sizeof(strbuf), "%u", proc->pid);
-		if (exist_proc_entry(strbuf, binder_proc_dir_entry_proc)) {
+		if (exist_proc_entry(strbuf, binder_proc_dir_entry_proc))
 			remove_proc_entry(strbuf, binder_proc_dir_entry_proc);
-		}
 		create_proc_read_entry(strbuf, S_IRUGO,
 				       binder_proc_dir_entry_proc,
 				       procfs_binder_read_proc_proc, proc);
