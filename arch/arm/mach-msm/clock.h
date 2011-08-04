@@ -17,14 +17,14 @@
 #ifndef __ARCH_ARM_MACH_MSM_CLOCK_H
 #define __ARCH_ARM_MACH_MSM_CLOCK_H
 
-#if defined (CONFIG_ARCH_MSM8X60)
+#if defined(CONFIG_ARCH_MSM8X60)
 #include <linux/init.h>
 #include <linux/types.h>
 #endif
 #include <linux/list.h>
 #include <mach/clk.h>
 #include <linux/timer.h>
-#if defined (CONFIG_ARCH_MSM7X30)
+#if defined(CONFIG_ARCH_MSM7X30)
 #include "clock-pcom.h"
 #include "clock-7x30.h"
 #endif
@@ -49,7 +49,7 @@
 #define CLKFLAG_VOTER			0x00000010
 
 #define CLK_FIRST_AVAILABLE_FLAG	0x00000100
-#if defined (CONFIG_ARCH_MSM8X60)
+#if defined(CONFIG_ARCH_MSM8X60)
 #define CLKFLAG_AUTO_OFF		0x00000200
 #else
 #define CLKFLAG_AUTO_OFF		(0x00000002)
@@ -82,7 +82,7 @@ struct clk {
 	const char *name;
 	struct clk_ops *ops;
 	const char *dbg_name;
-#if defined (CONFIG_ARCH_MSM8X60)
+#if defined(CONFIG_ARCH_MSM8X60)
 	struct list_head list;
 #else
 	struct hlist_node list;
@@ -247,7 +247,7 @@ enum clkvote_client {
 	CLKVOTE_MAX,
 };
 
-#if defined (CONFIG_ARCH_MSM8X60)
+#if defined(CONFIG_ARCH_MSM8X60)
 #ifdef CONFIG_DEBUG_FS
 int __init clock_debug_init(void);
 int __init clock_debug_add(struct clk *clock);
