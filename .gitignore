@@ -82,3 +82,10 @@ GTAGS
 arch/arm/boot/compressed/lib1funcs.S
 arch/arm/boot/compressed/piggy.gzip
 arch/arm/boot/compressed/vmlinux
+
+arch/arm/configs/ckisgen_v3_glacier_defconfig
+arch/arm/configs/ckisgen_v4_glacier_defconfig
+arch/arm/configs/ckisgen_v5_glacier_defconfig
+arch/arm/configs/ckisgen_v2_glacier_defconfig
+arch/arm/configs/ckisgen_glacier_defconfig
+arch/arm/mach-msm/ORIG_spm.h
